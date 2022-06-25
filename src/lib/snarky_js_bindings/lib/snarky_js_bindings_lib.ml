@@ -2813,8 +2813,14 @@ module Ledger = struct
   let create_token_account pk =
     Mina_base.Account_id.create (public_key pk) Mina_base.Token_id.default
 
+  let token_id_to_string token_id = Mina_base.Token_id.to_string token_id
+
   let custom_token_id pk =
     Mina_base.Account_id.derive_token_id ~owner:(create_token_account pk)
+
+  let custom_token_id_str pk =
+    Mina_base.Account_id.derive_token_id ~owner:(create_token_account pk)
+    |> token_id_to_string |> Js.string
 
   let () =
     let static_method name f =
@@ -2823,7 +2829,7 @@ module Ledger = struct
     let method_ name (f : ledger_class Js.t -> _) =
       method_ ledger_class name f
     in
-    static_method "customTokenID" custom_token_id ;
+    static_method "customTokenID" custom_token_id_str ;
     static_method "createTokenAccount" create_token_account ;
     static_method "create" create ;
 
