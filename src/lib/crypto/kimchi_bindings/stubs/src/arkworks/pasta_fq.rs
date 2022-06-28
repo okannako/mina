@@ -1,4 +1,4 @@
-use crate::arkworks::CamlBigInteger256;
+use crate::arkworks::BigInteger256;
 use crate::caml::caml_bytes_string::CamlBytesString;
 use ark_ff::ToBytes;
 use ark_ff::{FftField, Field, FpParameters, One, PrimeField, SquareRootField, UniformRand, Zero};
@@ -12,89 +12,7 @@ use std::{
     ops::Deref,
 };
 
-//
-// Fq <-> CamlFq
-//
-
-#[derive(Clone, Copy, ocaml_gen::CustomType)]
-/// A wrapper type for [Pasta Fq](mina_curves::pasta::fq::Fq)
-pub struct CamlFq(pub Fq);
-
-unsafe impl<'a> ocaml::FromValue<'a> for CamlFq {
-    fn from_value(value: ocaml::Value) -> Self {
-        let x: ocaml::Pointer<Self> = ocaml::FromValue::from_value(value);
-        *x.as_ref()
-    }
-}
-
-impl CamlFq {
-    unsafe extern "C" fn caml_pointer_finalize(v: ocaml::Raw) {
-        let ptr = v.as_pointer::<Self>();
-        ptr.drop_in_place()
-    }
-
-    unsafe extern "C" fn ocaml_compare(x: ocaml::Raw, y: ocaml::Raw) -> i32 {
-        let x = x.as_pointer::<Self>();
-        let y = y.as_pointer::<Self>();
-        match x.as_ref().0.cmp(&y.as_ref().0) {
-            core::cmp::Ordering::Less => -1,
-            core::cmp::Ordering::Equal => 0,
-            core::cmp::Ordering::Greater => 1,
-        }
-    }
-}
-
-ocaml::custom!(CamlFq {
-    finalize: CamlFq::caml_pointer_finalize,
-    compare: CamlFq::ocaml_compare,
-});
-
-//
-// Handy implementations
-//
-
-impl Deref for CamlFq {
-    type Target = Fq;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<Fq> for CamlFq {
-    fn from(x: Fq) -> Self {
-        CamlFq(x)
-    }
-}
-
-impl From<&Fq> for CamlFq {
-    fn from(x: &Fq) -> Self {
-        CamlFq(*x)
-    }
-}
-
-impl From<CamlFq> for Fq {
-    fn from(camlfq: CamlFq) -> Fq {
-        camlfq.0
-    }
-}
-
-impl From<&CamlFq> for Fq {
-    fn from(camlfq: &CamlFq) -> Fq {
-        camlfq.0
-    }
-}
-
-impl TryFrom<CamlBigInteger256> for CamlFq {
-    type Error = ocaml::Error;
-    fn try_from(x: CamlBigInteger256) -> Result<Self, Self::Error> {
-        Fq::from_repr(x.0)
-            .map(Into::into)
-            .ok_or(ocaml::Error::Message(
-                "TryFrom<CamlBigInteger256>: integer is larger than order",
-            ))
-    }
-}
+pub type CamlFq = Fq256<Fq_params>;
 
 //
 // Helpers
@@ -108,9 +26,13 @@ pub fn caml_pasta_fq_size_in_bits() -> ocaml::Int {
 
 #[ocaml_gen::func]
 #[ocaml::func]
-pub fn caml_pasta_fq_size() -> CamlBigInteger256 {
+pub fn caml_pasta_fq_size() -> BigInteger256 {
     Fq_params::MODULUS.into()
 }
+
+//
+// Arithmetic methods
+//
 
 #[ocaml_gen::func]
 #[ocaml::func]

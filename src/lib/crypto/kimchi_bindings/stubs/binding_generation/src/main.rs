@@ -125,7 +125,7 @@ fn generate_pasta_bindings(mut w: impl std::io::Write, env: &mut Env) {
     decl_fake_generic!(T3, 2);
 
     decl_module!(w, env, "BigInt256", {
-        decl_type!(w, env, CamlBigInteger256 => "t");
+        decl_type!(w, env, BigInteger256 => "t");
 
         decl_func!(w, env, caml_bigint_256_of_numeral => "of_numeral");
         decl_func!(w, env, caml_bigint_256_of_decimal_string => "of_decimal_string");
