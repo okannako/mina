@@ -160,6 +160,8 @@ let
           export -f patchShebangs stopNest isScript
           fd . --type executable -x bash -c "patchShebangs {}"
           export -n patchShebangs stopNest isScript
+        '' + pkgs.lib.optionalString pkgs.stdenv.isDarwin ''
+          export NIX_LDFLAGS="-F${pkgs.darwin.apple_sdk.frameworks.CoreFoundation}/Library/Frameworks -framework CoreFoundation $NIX_LDFLAGS"
         '';
 
         buildPhase = ''
@@ -195,7 +197,8 @@ let
           mv _build/default/src/app/generate_keypair/generate_keypair.exe $generate_keypair/bin/generate_keypair
           remove-references-to -t $(dirname $(dirname $(command -v ocaml))) {$out/bin/*,$mainnet/bin/*,$testnet/bin*,$genesis/bin/*,$generate_keypair/bin/*}
         '';
-        shellHook = "export MINA_LIBP2P_HELPER_PATH=${pkgs.libp2p_helper}/bin/libp2p_helper";
+        shellHook =
+          "export MINA_LIBP2P_HELPER_PATH=${pkgs.libp2p_helper}/bin/libp2p_helper";
       } // pkgs.lib.optionalAttrs static { OCAMLPARAM = "_,ccopt=-static"; }
         // pkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
           OCAMLPARAM = "_,cclib=-lc++";

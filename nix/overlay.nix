@@ -1,5 +1,6 @@
 final: prev:
 let
+  vend = final.callPackage ./vend {};
   pkgs = final;
   rustPlatformFor = rust:
     prev.makeRustPlatform {
@@ -9,21 +10,32 @@ let
     };
   toolchainHashes = {
     "1.58.0" = "sha256-eQBpSmy9+oHfVyPs0Ea+GVZ0fvIatj6QVhNhYKOJ6Jk=";
-    "nightly-2021-11-16" = "sha256-ErdLrUf9f3L/JtM5ghbefBMgsjDMYN3YHDTfGc008b4=";
+    "nightly-2021-11-16" =
+      "sha256-ErdLrUf9f3L/JtM5ghbefBMgsjDMYN3YHDTfGc008b4=";
     # copy this line with the correct toolchain name
     "placeholder" = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
   };
   cargoHashes = narHashesFromCargoLock ../src/lib/crypto/Cargo.lock;
-  rustChannelFromToolchainFileOf = file: with pkgs.lib; let
-    inherit (pkgs.lib) hasPrefix removePrefix readFile warn;
-    toolchain = (builtins.fromTOML (readFile file)).toolchain;
-    # nice error message if the toolchain is missing
-    placeholderPos = builtins.unsafeGetAttrPos "placeholder" toolchainHashes;
+  rustChannelFromToolchainFileOf = file:
+    with pkgs.lib;
+    let
+      inherit (pkgs.lib) hasPrefix removePrefix readFile warn;
+      toolchain = (builtins.fromTOML (readFile file)).toolchain;
+      # nice error message if the toolchain is missing
+      placeholderPos = builtins.unsafeGetAttrPos "placeholder" toolchainHashes;
     in pkgs.rustChannelOf rec {
-      channel = if hasPrefix "nightly-" toolchain.channel then "nightly" else toolchain.channel;
-      date = if channel == "nightly" then removePrefix "nightly-" toolchain.channel else null;
-      sha256 = toolchainHashes.${toolchain.channel} or
-        (warn ''Please add the rust toolchain hash (see error message below) for "${toolchain.channel}" at ${placeholderPos.file}:${toString placeholderPos.line}'' toolchainHashes.placeholder);
+      channel = if hasPrefix "nightly-" toolchain.channel then
+        "nightly"
+      else
+        toolchain.channel;
+      date = if channel == "nightly" then
+        removePrefix "nightly-" toolchain.channel
+      else
+        null;
+      sha256 = toolchainHashes.${toolchain.channel} or (warn ''
+        Please add the rust toolchain hash (see error message below) for "${toolchain.channel}" at ${placeholderPos.file}:${
+          toString placeholderPos.line
+        }'' toolchainHashes.placeholder);
     };
 
   # mapFilterListToAttrs :: (x -> {name: str, value: b}) -> (x -> bool) -> [x] -> {b}
@@ -71,6 +83,16 @@ in {
   #   };
   # });
 
+  jemalloc = if final.stdenv.isDarwin && final.stdenv.isAarch64 then
+    (prev.jemalloc.override {
+      stdenv = final.llvmPackages_11.stdenv;
+    }).overrideAttrs (oa: {
+      doCheck = false;
+      configureFlags = oa.configureFlags ++ [ "--with-lg-vaddr=48" ];
+    })
+  else
+    prev.jemalloc;
+
   git = prev.git.overrideAttrs
     (o: { doCheck = o.doCheck && !prev.stdenv.hostPlatform.isMusl; });
 
@@ -116,7 +138,8 @@ in {
     inherit (prev.rust) toRustTarget toRustTargetSpec;
   };
 
-  crypto-rust = (rustChannelFromToolchainFileOf ../src/lib/crypto/rust-toolchain.toml).rust;
+  crypto-rust =
+    (rustChannelFromToolchainFileOf ../src/lib/crypto/rust-toolchain.toml).rust;
 
   # Dependencies which aren't in nixpkgs and local packages which need networking to build
   kimchi_bindings_stubs = (rustPlatformFor
@@ -130,7 +153,7 @@ in {
           "^lib(/crypto(/.*)?)?$"
           "^external(/wasm-bindgen-rayon(/.*)?)?"
         ];
-        cargoBuildFlags = ["-p wires_15_stubs" "-p binding_generation"];
+        cargoBuildFlags = [ "-p wires_15_stubs" "-p binding_generation" ];
         sourceRoot = "source/lib/crypto";
         nativeBuildInputs = [ pkgs.ocamlPackages_mina.ocaml ];
         # FIXME: tests fail
@@ -170,7 +193,6 @@ in {
     pname = "libp2p_helper";
     version = "0.1";
     src = ../src/app/libp2p_helper/src;
-    runVend = true; # missing some schema files
     doCheck = false; # TODO: tests hang
     vendorSha256 =
       # sanity check, to make sure the fixed output drv doesn't keep working
@@ -187,6 +209,10 @@ in {
     NO_MDNS_TEST = 1; # no multicast support inside the nix sandbox
     overrideModAttrs = n: {
       # remove libp2p_ipc from go.mod, inject it back in postconfigure
+      postBuild = ''
+        rm vendor -rf
+        ${vend}/bin/vend
+      '';
       postConfigure = ''
         sed -i 's/.*libp2p_ipc.*//' go.mod
       '';
@@ -198,7 +224,8 @@ in {
     '';
   };
 
-  kimchi-rust = rustChannelFromToolchainFileOf ../src/lib/crypto/kimchi_bindings/wasm/rust-toolchain.toml;
+  kimchi-rust = rustChannelFromToolchainFileOf
+    ../src/lib/crypto/kimchi_bindings/wasm/rust-toolchain.toml;
   kimchi-rust-wasm = pkgs.kimchi-rust.rust.override {
     targets = [ "wasm32-unknown-unknown" ];
     # rust-src is needed for -Zbuild-std
@@ -236,7 +263,10 @@ in {
       nativeBuildInputs = [ final.pkg-config ];
 
       buildInputs = with final;
-        [ openssl ] ++ lib.optionals stdenv.isDarwin [ curl darwin.apple_sdk.frameworks.Security ];
+        [ openssl ] ++ lib.optionals stdenv.isDarwin [
+          curl
+          darwin.apple_sdk.frameworks.Security
+        ];
 
       checkInputs = [ final.nodejs ];
 
@@ -248,7 +278,7 @@ in {
     version = "0.1.0";
     src = final.lib.sourceByRegex ../src [
       "^lib(/crypto(/.*)?)?$"
-      "^lib/crypto/Cargo\.(lock|toml)$"
+      "^lib/crypto/Cargo.(lock|toml)$"
       "^lib(/crypto(/kimchi_bindings(/wasm(/.*)?)?)?)?$"
       "^lib(/crypto(/proof-systems(/.*)?)?)?$"
     ];
