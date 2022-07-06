@@ -4,17 +4,13 @@ import {
   declareMethods,
   State,
   PrivateKey,
-  PublicKey,
   SmartContract,
-  deploy,
   isReady,
   shutdown,
   Mina,
-  signFeePayer,
   Permissions,
   Ledger,
   Party,
-  UInt32,
   UInt64,
   Bool,
   partiesToJson,
@@ -75,11 +71,6 @@ class SimpleZkapp extends SmartContract {
     let recieverAddress = receiver.toPublicKey();
     recieverAddress.assertEquals(privilegedAddress);
 
-    // assert that the caller nonce is 0, and increment the nonce - this way, payout can only happen once
-    let receiverParty = Party.createUnsigned(recieverAddress);
-    // receiverParty.account.nonce.assertEquals(UInt32.zero);
-    receiverParty.body.incrementNonce = Bool(true);
-
     // transfer custom tokens to the receiver
     let balance = this.account.balance.get();
     this.account.balance.assertEquals(balance);
@@ -91,8 +82,13 @@ class SimpleZkapp extends SmartContract {
     console.log("TOKEN ACCOUNT", recieverAddress.toBase58());
     console.log("CUSTOM TOKEN", customToken);
 
-    this.transfer(amountToSend, receiverParty);
-    // this.transfer(amountToSend, receiverParty, customToken);
+    //this.transfer(amountToSend, receiverParty);
+    this.token.transfer({
+      from: this.address,
+      to: recieverAddress,
+      amount: amountToSend,
+    });
+
     console.log(`Sending ${amountToSend} to ${recieverAddress.toBase58()}`);
   }
 }
