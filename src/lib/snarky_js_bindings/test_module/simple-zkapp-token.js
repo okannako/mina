@@ -67,7 +67,7 @@ class SimpleZkapp extends SmartContract {
     this.transfer(halfBalance, callerParty);
   }
 
-  customToken(receiver) {
+  sendTokenWithAccountCreation(receiver) {
     let recieverAddress = receiver.toPublicKey();
     recieverAddress.assertEquals(privilegedAddress);
 
@@ -76,13 +76,31 @@ class SimpleZkapp extends SmartContract {
     this.account.balance.assertEquals(balance);
     let amountToSend = balance.div(10);
 
-    // Create custom token
+    // Log custom token info
     const customToken = Ledger.customTokenID(this.address);
     console.log("TOKEN OWNER", this.address.toBase58());
     console.log("TOKEN ACCOUNT", recieverAddress.toBase58());
     console.log("CUSTOM TOKEN", customToken);
 
-    //this.transfer(amountToSend, receiverParty);
+    this.token.transfer({
+      from: this.address,
+      to: recieverAddress,
+      amount: amountToSend,
+      accountCreation: true,
+    });
+
+    console.log(`Sending ${amountToSend} to ${recieverAddress.toBase58()}`);
+  }
+
+  sendTokenWithoutAccountCreation(receiver) {
+    let recieverAddress = receiver.toPublicKey();
+    recieverAddress.assertEquals(privilegedAddress);
+
+    // transfer custom tokens to the receiver
+    let balance = this.account.balance.get();
+    this.account.balance.assertEquals(balance);
+    let amountToSend = balance.div(10);
+
     this.token.transfer({
       from: this.address,
       to: recieverAddress,
@@ -98,7 +116,8 @@ declareMethods(SimpleZkapp, {
   initialize: [],
   update: [Field],
   payout: [PrivateKey],
-  customToken: [PrivateKey],
+  sendTokenWithAccountCreation: [PrivateKey],
+  sendTokenWithoutAccountCreation: [PrivateKey],
 });
 
 let Local = Mina.LocalBlockchain();
@@ -145,9 +164,17 @@ console.log(`initial balance: ${zkapp.account.balance.get().div(1e9)} MINA`);
 // });
 // sendTransaction(tx);
 
-console.log("token");
+console.log("token transfer with account creation");
 tx = await Local.transaction(feePayer, () => {
-  zkapp.customToken(privilegedKey);
+  zkapp.sendTokenWithAccountCreation(privilegedKey);
+  zkapp.sign(zkappKey);
+});
+
+sendTransaction(tx);
+
+console.log("token transfer without account creation");
+tx = await Local.transaction(feePayer, () => {
+  zkapp.sendTokenWithoutAccountCreation(privilegedKey);
   zkapp.sign(zkappKey);
 });
 
