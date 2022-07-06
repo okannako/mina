@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# This wrapper check that the current opam switch is consistent with the src/opam.export file before calling dune.
+"$(dirname "$0")/check_opam_switch/check_opam_switch.sh" && exec dune "$@"

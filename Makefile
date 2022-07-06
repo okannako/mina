@@ -12,6 +12,10 @@ ifeq ($(DUNE_PROFILE),)
 DUNE_PROFILE := dev
 endif
 
+# Dune 
+DUNE = scripts/dune_wrapper
+
+
 # Temp directory
 TMPDIR ?= /tmp
 
@@ -76,112 +80,112 @@ libp2p_helper:
 
 genesis_ledger: ocaml_checks
 	$(info Building runtime_genesis_ledger)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && env MINA_COMMIT_SHA1=$(GITLONGHASH) dune exec --profile=$(DUNE_PROFILE) src/app/runtime_genesis_ledger/runtime_genesis_ledger.exe -- --genesis-dir $(GENESIS_DIR)
+	ulimit -s 65532 && (ulimit -n 10240 || true) && env MINA_COMMIT_SHA1=$(GITLONGHASH) $(DUNE) exec --profile=$(DUNE_PROFILE) src/app/runtime_genesis_ledger/runtime_genesis_ledger.exe -- --genesis-dir $(GENESIS_DIR)
 	$(info Genesis ledger and genesis proof generated)
 
 build: ocaml_checks git_hooks reformat-diff libp2p_helper
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && env MINA_COMMIT_SHA1=$(GITLONGHASH) dune build src/app/logproc/logproc.exe src/app/cli/src/mina.exe --profile=$(DUNE_PROFILE)
+	ulimit -s 65532 && (ulimit -n 10240 || true) && env MINA_COMMIT_SHA1=$(GITLONGHASH) $(DUNE) build src/app/logproc/logproc.exe src/app/cli/src/mina.exe --profile=$(DUNE_PROFILE)
 	$(info Build complete)
 
 build_all_sigs: ocaml_checks git_hooks reformat-diff libp2p_helper
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && env MINA_COMMIT_SHA1=$(GITLONGHASH) dune build src/app/logproc/logproc.exe src/app/cli/src/mina.exe src/app/cli/src/mina_testnet_signatures.exe src/app/cli/src/mina_mainnet_signatures.exe --profile=$(DUNE_PROFILE)
+	ulimit -s 65532 && (ulimit -n 10240 || true) && env MINA_COMMIT_SHA1=$(GITLONGHASH) $(DUNE) build src/app/logproc/logproc.exe src/app/cli/src/mina.exe src/app/cli/src/mina_testnet_signatures.exe src/app/cli/src/mina_mainnet_signatures.exe --profile=$(DUNE_PROFILE)
 	$(info Build complete)
 
 build_archive: ocaml_checks git_hooks reformat-diff
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/archive/archive.exe --profile=$(DUNE_PROFILE)
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/archive/archive.exe --profile=$(DUNE_PROFILE)
 	$(info Build complete)
 
 build_archive_all_sigs: ocaml_checks git_hooks reformat-diff
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/archive/archive.exe src/app/archive/archive_testnet_signatures.exe src/app/archive/archive_mainnet_signatures.exe --profile=$(DUNE_PROFILE)
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/archive/archive.exe src/app/archive/archive_testnet_signatures.exe src/app/archive/archive_mainnet_signatures.exe --profile=$(DUNE_PROFILE)
 	$(info Build complete)
 
 build_rosetta: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/archive/archive.exe src/app/rosetta/rosetta.exe src/app/rosetta/ocaml-signer/signer.exe --profile=$(DUNE_PROFILE)
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/archive/archive.exe src/app/rosetta/rosetta.exe src/app/rosetta/ocaml-signer/signer.exe --profile=$(DUNE_PROFILE)
 	$(info Build complete)
 
 build_rosetta_all_sigs: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/archive/archive.exe src/app/archive/archive_testnet_signatures.exe src/app/archive/archive_mainnet_signatures.exe src/app/rosetta/rosetta.exe src/app/rosetta/rosetta_testnet_signatures.exe src/app/rosetta/rosetta_mainnet_signatures.exe src/app/rosetta/ocaml-signer/signer.exe src/app/rosetta/ocaml-signer/signer_testnet_signatures.exe src/app/rosetta/ocaml-signer/signer_mainnet_signatures.exe --profile=$(DUNE_PROFILE)
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/archive/archive.exe src/app/archive/archive_testnet_signatures.exe src/app/archive/archive_mainnet_signatures.exe src/app/rosetta/rosetta.exe src/app/rosetta/rosetta_testnet_signatures.exe src/app/rosetta/rosetta_mainnet_signatures.exe src/app/rosetta/ocaml-signer/signer.exe src/app/rosetta/ocaml-signer/signer_testnet_signatures.exe src/app/rosetta/ocaml-signer/signer_mainnet_signatures.exe --profile=$(DUNE_PROFILE)
 	$(info Build complete)
 
 build_intgtest: ocaml_checks
 	$(info Starting Build)
-	dune build --profile=integration_tests src/app/test_executive/test_executive.exe src/app/logproc/logproc.exe
+	$(DUNE) build --profile=integration_tests src/app/test_executive/test_executive.exe src/app/logproc/logproc.exe
 	$(info Build complete)
 
 client_sdk: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/client_sdk/client_sdk.bc.js --profile=nonconsensus_mainnet
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/client_sdk/client_sdk.bc.js --profile=nonconsensus_mainnet
 	$(info Build complete)
 
 client_sdk_test_sigs: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/client_sdk/tests/test_signatures.exe --profile=mainnet
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/client_sdk/tests/test_signatures.exe --profile=mainnet
 	$(info Build complete)
 
 client_sdk_test_sigs_nonconsensus: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/client_sdk/tests/test_signatures_nonconsensus.exe --profile=nonconsensus_mainnet
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/client_sdk/tests/test_signatures_nonconsensus.exe --profile=nonconsensus_mainnet
 	$(info Build complete)
 
 rosetta_lib_encodings: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/lib/rosetta_lib/test/test_encodings.exe --profile=mainnet
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/lib/rosetta_lib/test/test_encodings.exe --profile=mainnet
 	$(info Build complete)
 
 rosetta_lib_encodings_nonconsensus: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/nonconsensus/rosetta_lib/test/test_encodings.exe --profile=nonconsensus_mainnet
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/nonconsensus/rosetta_lib/test/test_encodings.exe --profile=nonconsensus_mainnet
 	$(info Build complete)
 
 dhall_types: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/dhall_types/dump_dhall_types.exe --profile=dev
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/dhall_types/dump_dhall_types.exe --profile=dev
 	$(info Build complete)
 
 replayer: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/replayer/replayer.exe --profile=testnet_postake_medium_curves
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/replayer/replayer.exe --profile=testnet_postake_medium_curves
 	$(info Build complete)
 
 delegation_compliance: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/delegation_compliance/delegation_compliance.exe --profile=testnet_postake_medium_curves
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/delegation_compliance/delegation_compliance.exe --profile=testnet_postake_medium_curves
 	$(info Build complete)
 
 missing_blocks_auditor: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/missing_blocks_auditor/missing_blocks_auditor.exe --profile=testnet_postake_medium_curves
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/missing_blocks_auditor/missing_blocks_auditor.exe --profile=testnet_postake_medium_curves
 	$(info Build complete)
 
 extract_blocks: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/extract_blocks/extract_blocks.exe --profile=testnet_postake_medium_curves
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/extract_blocks/extract_blocks.exe --profile=testnet_postake_medium_curves
 	$(info Build complete)
 
 archive_blocks: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/archive_blocks/archive_blocks.exe --profile=testnet_postake_medium_curves
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/archive_blocks/archive_blocks.exe --profile=testnet_postake_medium_curves
 	$(info Build complete)
 
 patch_archive_test: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/patch_archive_test/patch_archive_test.exe --profile=testnet_postake_medium_curves
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/patch_archive_test/patch_archive_test.exe --profile=testnet_postake_medium_curves
 	$(info Build complete)
 
 genesis_ledger_from_tsv: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/genesis_ledger_from_tsv/genesis_ledger_from_tsv.exe --profile=testnet_postake_medium_curves
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/genesis_ledger_from_tsv/genesis_ledger_from_tsv.exe --profile=testnet_postake_medium_curves
 	$(info Build complete)
 
 swap_bad_balances: ocaml_checks
 	$(info Starting Build)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build src/app/swap_bad_balances/swap_bad_balances.exe --profile=testnet_postake_medium_curves
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build src/app/swap_bad_balances/swap_bad_balances.exe --profile=testnet_postake_medium_curves
 	$(info Build complete)
 
 dev: build
@@ -195,19 +199,19 @@ macos-portable:
 	@echo Find coda-daemon-macos.zip inside _build/
 
 update-graphql:
-	ulimit -s 65532 && (ulimit -n 10240 || true) && dune build --profile=$(DUNE_PROFILE) graphql_schema.json
+	ulimit -s 65532 && (ulimit -n 10240 || true) && $(DUNE) build --profile=$(DUNE_PROFILE) graphql_schema.json
 
 ########################################
 ## Lint
 
 reformat: ocaml_checks git_hooks
-	dune exec --profile=$(DUNE_PROFILE) src/app/reformat/reformat.exe -- -path .
+	$(DUNE) exec --profile=$(DUNE_PROFILE) src/app/reformat/reformat.exe -- -path .
 
 reformat-diff:
 	@ocamlformat --doc-comments=before --inplace $(shell git status -s | cut -c 4- | grep '\.mli\?$$' | while IFS= read -r f; do stat "$$f" >/dev/null 2>&1 && echo "$$f"; done) || true
 
 check-format: ocaml_checks
-	dune exec --profile=$(DUNE_PROFILE) src/app/reformat/reformat.exe -- -path . -check
+	$(DUNE) exec --profile=$(DUNE_PROFILE) src/app/reformat/reformat.exe -- -path . -check
 
 check-snarky-submodule:
 	./scripts/check-snarky-submodule.sh
@@ -238,12 +242,12 @@ deb_optimized:
 
 build_pv_keys: ocaml_checks
 	$(info Building keys)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && env MINA_COMMIT_SHA1=$(GITLONGHASH) dune exec --profile=$(DUNE_PROFILE) src/lib/snark_keys/gen_keys/gen_keys.exe -- --generate-keys-only
+	ulimit -s 65532 && (ulimit -n 10240 || true) && env MINA_COMMIT_SHA1=$(GITLONGHASH) $(DUNE) exec --profile=$(DUNE_PROFILE) src/lib/snark_keys/gen_keys/gen_keys.exe -- --generate-keys-only
 	$(info Keys built)
 
 build_or_download_pv_keys: ocaml_checks
 	$(info Building keys)
-	ulimit -s 65532 && (ulimit -n 10240 || true) && env MINA_COMMIT_SHA1=$(GITLONGHASH) dune exec --profile=$(DUNE_PROFILE) src/lib/snark_keys/gen_keys/gen_keys.exe -- --generate-keys-only
+	ulimit -s 65532 && (ulimit -n 10240 || true) && env MINA_COMMIT_SHA1=$(GITLONGHASH) $(DUNE) exec --profile=$(DUNE_PROFILE) src/lib/snark_keys/gen_keys/gen_keys.exe -- --generate-keys-only
 	$(info Keys built)
 
 publish_deb:
@@ -276,7 +280,7 @@ web:
 ## Benchmarks
 
 benchmarks: ocaml_checks
-	dune build src/app/benchmarks/main.exe
+	$(DUNE) build src/app/benchmarks/main.exe
 
 ########################################
 # Coverage testing and output
@@ -324,7 +328,7 @@ doc_diagrams: $(addsuffix .png,$(wildcard $(doc_diagram_sources)))
 # Generate odoc documentation
 
 ml-docs: ocaml_checks
-	dune build --profile=$(DUNE_PROFILE) @doc
+	$(DUNE) build --profile=$(DUNE_PROFILE) @doc
 
 ########################################
 # To avoid unintended conflicts with file names, always add new targets to .PHONY

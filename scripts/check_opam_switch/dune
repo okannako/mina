@@ -1,0 +1,6 @@
+(executable
+ (name check_opam_switch)
+ (modes native)
+ (libraries opam-format opam-file-format)
+ (instrumentation (backend bisect_ppx))
+ (preprocess (pps ppx_version)))
