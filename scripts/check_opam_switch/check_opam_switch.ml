@@ -5,10 +5,14 @@
    More specifically, it checks the [installed] fields, and the overlays (which look like inlined .opam files).
  *)
 
-let fail opam_export_filepath (print_error_message: unit -> unit)=
+let fail ?(from_overlay=false) opam_export_filepath (print_error_message: unit -> unit) =
   Format.printf "\n[ERROR]: The current opam switch is not a superset of the %s file:\n" opam_export_filepath;
   print_error_message ();
-  Format.printf "Current switch should be updated using 'opam switch import src/opam.export'.\n\n";
+  Format.printf "Current switch should be updated using 'opam switch import src/opam.export'.\n";
+  if from_overlay then
+    (* See https://github.com/ocaml/opam/issues/5173 *)
+    Format.printf "Potentially twice in a row due to an opam bug.\n";
+  Format.printf "\n";
   exit 1
 
 (** Checks that [pkgs] is a subset of [pkgs_current] *)
@@ -23,8 +27,8 @@ let check_pkgs_subset opam_export_filepath pkgs pkgs_current =
     pkgs
 
 let check_overlay_eq opam_export_filepath name (overlay_file:OpamFile.OPAM.t) (overlay_current: OpamFile.OPAM.t) =
-  if overlay_file <> overlay_current then
-    fail opam_export_filepath (fun () ->
+  if not @@ OpamFile.OPAM.effectively_equal overlay_file overlay_current then
+    fail ~from_overlay:true opam_export_filepath (fun () ->
         Format.printf "Different overlays for package : %s\n" name;
         Format.printf "\nopam.export FILE:\n";
         Format.printf "-------------- BEGIN ----------------------\n";

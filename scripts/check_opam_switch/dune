@@ -1,6 +1,31 @@
+; Checks that the current opam switch is consistent with the opam.export file.
+; The rule is invalidated if opam.export or the opam switch was modified
+; ie. if ($OPAM_SWITCH_PREFIX/.opam-switch/switch-state was written to)
+
+(rule
+ (target checked_switch)
+ (deps
+  opam_update_time
+  ; check_opam_switch.exe
+  check_opam_switch.exe
+  check_opam_switch.sh
+  ../../src/opam.export)
+ (action
+  (run ./check_opam_switch.sh)))
+
+; write the update time of the switch to opam_update_time
+(rule
+ (target opam_update_time)
+ (deps (universe))
+ (action
+  (run ./switch_update_time.sh)))
+
+; ocaml executable that compares to switch state files.
 (executable
  (name check_opam_switch)
  (modes native)
  (libraries opam-format opam-file-format)
- (instrumentation (backend bisect_ppx))
- (preprocess (pps ppx_version)))
+ (instrumentation
+  (backend bisect_ppx))
+ (preprocess
+  (pps ppx_version)))
