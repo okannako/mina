@@ -165,6 +165,7 @@ installed: [
   "opam-depext.1.2.1"
   "opam-file-format.2.1.4"
   "opam-format.2.1.2"
+  "opam-core.2.1.2"
   "parsexp.v0.14.2"
   "postgresql.5.0.0"
   "ppx_assert.v0.14.0"

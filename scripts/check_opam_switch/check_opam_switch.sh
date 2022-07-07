@@ -5,6 +5,10 @@
 
 set -e 
 
+if [ "$DISABLE_CHECK_OPAM_SWITCH_SCRIPT" = true ] ; then
+    exit 0
+fi
+
 CHECK_OPAM_DIR="$(dirname "$0")"
 
 temp_file=$(mktemp /tmp/opam.export.XXXXXX)
@@ -15,4 +19,3 @@ opam switch export "$temp_file"
 pushd "$CHECK_OPAM_DIR"
 dune exec ./check_opam_switch.exe ../../src/opam.export "$temp_file"
 popd
-

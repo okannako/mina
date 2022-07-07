@@ -135,6 +135,10 @@ let
         MINA_COMMIT_SHA1 = "__commit_sha1___________________________";
         MINA_BRANCH = "<unknown>";
 
+        # The check_opam_switch script ensures that the opam switch is up to date.
+        # This is only needed when using opam to manage ocaml dependencies.
+        DISABLE_CHECK_OPAM_SWITCH_SCRIPT = "true";
+
         buildInputs = ocaml-libs ++ external-libs;
         nativeBuildInputs = [
           self.dune
